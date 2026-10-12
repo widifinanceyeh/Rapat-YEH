@@ -2,7 +2,7 @@
 const PETA = {
   isu: { judul: 'JUDUL', ringkasan: 'RINGKASAN', kategori: 'KATEGORI', statusIsu: 'STATUS_ISU', prioritas: 'PRIORITAS', picUtama: 'PIC_UTAMA', tanggalMuncul: 'TANGGAL_MUNCUL', catatan: 'CATATAN', jenisPokok: 'JENIS_POKOK', pengusul: 'PENGUSUL', unitTerkait: 'UNIT_TERKAIT', tujuanPembahasan: 'TUJUAN_PEMBAHASAN', pertanyaanKeputusan: 'PERTANYAAN_KEPUTUSAN', catatanPersiapan: 'CATATAN_PERSIAPAN', penanda: 'PENANDA' },
   tindakLanjut: { judul: 'JUDUL', catatan: 'CATATAN', progresTerakhir: 'PROGRES_TERAKHIR', pic: 'PIC', status: 'STATUS', tanggalTarget: 'TANGGAL_TARGET', idInduk: 'ID_INDUK', penanda: 'PENANDA', terkaitDengan: 'TERKAIT_DENGAN', idIsu: 'ID_ISU', idNotulen: 'ID_NOTULEN', idArahanAsal: 'ID_ARAHAN_ASAL' },
-  rapat: { judulRapat: 'JUDUL_RAPAT', tanggal: 'TANGGAL', jenisRapat: 'JENIS_RAPAT', jamMulai: 'JAM_MULAI', jamSelesai: 'JAM_SELESAI', status: 'STATUS', catatan: 'CATATAN' },
+  rapat: { judulRapat: 'JUDUL_RAPAT', tanggal: 'TANGGAL', jenisRapat: 'JENIS_RAPAT', jamMulai: 'JAM_MULAI', jamSelesai: 'JAM_SELESAI', status: 'STATUS', catatan: 'CATATAN', idPimpinan: 'ID_PIMPINAN', idNotulis: 'ID_NOTULIS', idPeserta: 'ID_PESERTA' },
   arahan: { tanggal: 'TANGGAL', lembaga: 'LEMBAGA', forum: 'FORUM', unitTujuan: 'UNIT_TUJUAN', isiArahan: 'ISI_ARAHAN', sifat: 'SIFAT', catatan: 'CATATAN' },
   notulen: { tanggal: 'TANGGAL', judul: 'JUDUL', unitPeserta: 'UNIT_PESERTA', catatan: 'CATATAN', idRapat: 'ID_RAPAT' },
 };

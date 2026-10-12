@@ -6,21 +6,39 @@ import { MenuTitik } from '../components/Pilih';
 import Ikon from '../components/Ikon';
 import { aksiRapat, salinBahan } from './Rapat';
 import { DaftarTlRingkas } from './DetailTL';
-import { tglPanjang, tgl, rentangJam } from '../utils/format';
-import { statusRapat, nadaPembahasan, judulAgenda, tautan } from '../utils/data';
+import { tglPanjang, tgl, rentangJam, inisial, namaPendek } from '../utils/format';
+import { statusRapat, nadaPembahasan, judulAgenda, tautan, kelompokUnit, pesertaRapat } from '../utils/data';
 
 function Peserta({ data, r }) {
   const o = (id, nama) => { const x = data.peta.orang[id]; return x ? x.NAMA : nama; };
-  const ids = String(r.ID_PESERTA || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const peserta = ids.map((id) => o(id, id));
+  const peserta = pesertaRapat(data, r);
+  const grup = kelompokUnit(peserta);
   return (
-    <div className="grid-info">
-      <Info label="Pimpinan"><Orang nama={o(r.ID_PIMPINAN, r.PIMPINAN_RAPAT)} /></Info>
-      <Info label="Notulis"><Orang nama={o(r.ID_NOTULIS, r.NOTULIS)} /></Info>
-      <Info label={peserta.length ? 'Peserta (' + peserta.length + ')' : 'Peserta'}>
-        {peserta.length ? <div className="daftar-orang">{peserta.map((p, i) => <Orang key={i} nama={p} />)}</div> : <span className={r.PESERTA ? '' : 'samar'}>{r.PESERTA || '—'}</span>}
-      </Info>
-    </div>
+    <>
+      <div className="grid-info">
+        <Info label="Pimpinan"><Orang nama={o(r.ID_PIMPINAN, r.PIMPINAN_RAPAT)} /></Info>
+        <Info label="Notulis"><Orang nama={o(r.ID_NOTULIS, r.NOTULIS)} /></Info>
+      </div>
+      <div className="peserta-ringkas">
+        <div className="peserta-ringkas-kepala">
+          <span>Peserta</span>
+          {peserta.length ? <small>{peserta.length} orang{grup.length > 1 ? grup.map((g) => ' · ' + g.label + ' ' + g.items.length).join('') : ''}</small> : null}
+        </div>
+        {peserta.length ? grup.map((g) => (
+          <div className="peserta-unit" key={g.kunci}>
+            {grup.length > 1 || g.kunci !== '~LAINNYA' ? <h5>{g.label}<small>{g.items.length}</small></h5> : null}
+            <ul className="peserta-grid">
+              {g.items.map((p) => (
+                <li key={p.id} title={p.nama}>
+                  <span className="avatar">{inisial(p.nama)}</span>
+                  <span><b>{namaPendek(p.nama)}</b>{p.jabatan ? <small>{p.jabatan}</small> : null}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )) : <span className={r.PESERTA ? '' : 'samar'}>{r.PESERTA || '—'}</span>}
+      </div>
+    </>
   );
 }
 

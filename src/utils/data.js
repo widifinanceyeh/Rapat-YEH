@@ -173,8 +173,40 @@ export function cariOrang(d, teksNama) {
   return cocok.length === 1 ? cocok[0] : null;
 }
 export function opsiOrang(d) {
+  const no = {};
+  d.orang.forEach((o, i) => { no[o.ID_ORANG] = i; });
   return d.orang.filter((o) => o.STATUS !== 'Nonaktif').slice().sort((a, b) => namaPendek(a.NAMA).localeCompare(namaPendek(b.NAMA)))
-    .map((o) => ({ value: o.NAMA, label: namaPendek(o.NAMA), meta: [o.JABATAN, o.UNIT].filter(Boolean).join(' · '), cari: [o.NAMA, o.JABATAN, o.UNIT].join(' '), id: o.ID_ORANG }));
+    .map((o) => ({ value: o.NAMA, label: namaPendek(o.NAMA), meta: [o.JABATAN, o.UNIT].filter(Boolean).join(' · '), cari: [o.NAMA, o.JABATAN, o.UNIT].join(' '), id: o.ID_ORANG,
+      jabatan: teks(o.JABATAN), unit: teks(o.UNIT), no: no[o.ID_ORANG] }));
+}
+
+/**
+ * Kelompokkan orang per UNIT. Urutan unit mengikuti urutan baris pertama unit itu di DaftarOrang;
+ * beda huruf besar-kecil/spasi dianggap sama; UNIT kosong masuk "Lainnya" (paling akhir).
+ * items: [{ unit, no, ... }] → [{ kunci, label, items }]
+ */
+export function kelompokUnit(items) {
+  const peta = {};
+  const urut = [];
+  items.forEach((x) => {
+    const u = teks(x.unit);
+    const k = u ? u.replace(/\s+/g, ' ').toUpperCase() : '~LAINNYA';
+    if (!peta[k]) { peta[k] = { kunci: k, label: u || 'Lainnya', items: [], no: Infinity }; urut.push(peta[k]); }
+    peta[k].items.push(x);
+    const n = typeof x.no === 'number' ? x.no : Infinity;
+    if (n < peta[k].no) { peta[k].no = n; if (u) peta[k].label = u; } // ejaan unit mengikuti baris teratas di DaftarOrang
+  });
+  return urut.sort((a, b) => (a.kunci === '~LAINNYA') - (b.kunci === '~LAINNYA') || a.no - b.no || a.label.localeCompare(b.label));
+}
+
+/** Peserta rapat (ID_PESERTA) sebagai daftar orang lengkap untuk tampilan. */
+export function pesertaRapat(d, r) {
+  const no = {};
+  d.orang.forEach((o, i) => { no[o.ID_ORANG] = i; });
+  return String(r.ID_PESERTA || '').split(',').map((s) => s.trim()).filter(Boolean).map((id) => {
+    const x = d.peta.orang[id];
+    return x ? { id, nama: x.NAMA, jabatan: teks(x.JABATAN), unit: teks(x.UNIT), no: no[id] } : { id, nama: id, jabatan: '', unit: '', no: Infinity };
+  });
 }
 export function opsiOrangId(d) {
   return opsiOrang(d).map((o) => Object.assign({}, o, { value: o.id }));

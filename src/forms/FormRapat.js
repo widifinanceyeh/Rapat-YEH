@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useApp } from '../konteks';
 import { Modal } from '../components/Modal';
 import { Field, Lipat } from '../components/Dasar';
-import { Pilih, PilihBanyak } from '../components/Pilih';
+import { Pilih } from '../components/Pilih';
+import PilihPeserta from '../components/PilihPeserta';
 import EditorTautan from '../components/EditorTautan';
 import Ikon from '../components/Ikon';
 import { useIsian, selisih, GalatForm, Kaki } from './umum';
@@ -136,7 +137,9 @@ export default function FormRapat({ item, agendaAwal, draf, galat }) {
           <Field label="Pimpinan rapat"><Pilih value={v.idPimpinan} onChange={(x) => set('idPimpinan', x)} opsi={orangOpsi} kosong="— belum ditentukan —" placeholder={item && item.PIMPINAN_RAPAT ? item.PIMPINAN_RAPAT : 'Pilih orang'} /></Field>
           <Field label="Notulis"><Pilih value={v.idNotulis} onChange={(x) => set('idNotulis', x)} opsi={orangOpsi} kosong="— belum ditentukan —" placeholder={item && item.NOTULIS ? item.NOTULIS : 'Pilih orang'} /></Field>
         </div>
-        <Field label="Peserta"><PilihBanyak value={v.idPeserta} onChange={(x) => set('idPeserta', x)} opsi={orangOpsi} placeholder={item && item.PESERTA && !v.idPeserta.length ? 'Data lama: ' + item.PESERTA : 'Pilih peserta'} /></Field>
+        <Field label="Peserta">
+          <PilihPeserta value={v.idPeserta} onChange={(x) => set('idPeserta', x)} opsi={orangOpsi} catatanLama={item && item.PESERTA && !String(item.ID_PESERTA || '').trim() ? item.PESERTA : ''} />
+        </Field>
         {baru ? <OrangBaru onSelesai={orangBaruSelesai} /> : (
           <div className="baris-aksi-kecil">
             <span className="samar kecil">Nama belum ada?</span>
