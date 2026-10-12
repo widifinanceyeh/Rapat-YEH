@@ -5,8 +5,9 @@ const PETA = {
   rapat: { judulRapat: 'JUDUL_RAPAT', tanggal: 'TANGGAL', jenisRapat: 'JENIS_RAPAT', jamMulai: 'JAM_MULAI', jamSelesai: 'JAM_SELESAI', status: 'STATUS', catatan: 'CATATAN', idPimpinan: 'ID_PIMPINAN', idNotulis: 'ID_NOTULIS', idPeserta: 'ID_PESERTA' },
   arahan: { tanggal: 'TANGGAL', lembaga: 'LEMBAGA', forum: 'FORUM', unitTujuan: 'UNIT_TUJUAN', isiArahan: 'ISI_ARAHAN', sifat: 'SIFAT', catatan: 'CATATAN' },
   notulen: { tanggal: 'TANGGAL', judul: 'JUDUL', unitPeserta: 'UNIT_PESERTA', catatan: 'CATATAN', idRapat: 'ID_RAPAT' },
+  tautanDokumen: { judul: 'JUDUL_TAUTAN', jenisDokumen: 'JENIS_DOKUMEN', jenisBerkas: 'JENIS_BERKAS' },
 };
-const ID = { isu: 'ID_ISU', tindakLanjut: 'ID_TINDAKLANJUT', rapat: 'ID_RAPAT', arahan: 'ID_ARAHAN', notulen: 'ID_NOTULEN' };
+const ID = { isu: 'ID_ISU', tindakLanjut: 'ID_TINDAKLANJUT', rapat: 'ID_RAPAT', arahan: 'ID_ARAHAN', notulen: 'ID_NOTULEN', tautanDokumen: 'ID_TAUTAN' };
 const JENIS_TAUTAN = { isu: 'Pokok Bahasan', tindakLanjut: 'Tindak Lanjut', rapat: 'Rapat', arahan: 'Arahan', notulen: 'Notulen' };
 const AKSI = {
   addIsu: ['isu', 'tambah'], updateIsu: ['isu', 'ubah'], deleteIsu: ['isu', 'hapus'],
@@ -14,6 +15,7 @@ const AKSI = {
   addRapat: ['rapat', 'tambah'], updateRapat: ['rapat', 'ubah'], deleteRapat: ['rapat', 'hapus'],
   addArahan: ['arahan', 'tambah'], updateArahan: ['arahan', 'ubah'], deleteArahan: ['arahan', 'hapus'],
   updateNotulen: ['notulen', 'ubah'], deleteNotulen: ['notulen', 'hapus'],
+  ubahTautan: ['tautanDokumen', 'ubah'],
 };
 
 function kolom(koleksi, payload) {
@@ -27,7 +29,7 @@ function kolom(koleksi, payload) {
 function gantiTautan(raw, koleksi, id, list) {
   const jenis = JENIS_TAUTAN[koleksi];
   const sisa = (raw.tautanDokumen || []).filter((t) => !(t.JENIS_ENTITAS === jenis && t.ID_ENTITAS === id));
-  const baru = (list || []).filter((l) => l && l.url).map((l, i) => ({ ID_TAUTAN: 'BARU-' + id + '-' + i, JENIS_ENTITAS: jenis, ID_ENTITAS: id, JUDUL_TAUTAN: l.judul, URL: l.url, JENIS_DOKUMEN: l.jenisDokumen, CATATAN: l.catatan || '' }));
+  const baru = (list || []).filter((l) => l && l.url).map((l, i) => ({ ID_TAUTAN: 'BARU-' + id + '-' + i, JENIS_ENTITAS: jenis, ID_ENTITAS: id, JUDUL_TAUTAN: l.judul, URL: l.url, JENIS_DOKUMEN: l.jenisDokumen, JENIS_BERKAS: l.jenisBerkas || '', CATATAN: l.catatan || '' }));
   return sisa.concat(baru);
 }
 

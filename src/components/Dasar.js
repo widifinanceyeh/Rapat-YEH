@@ -1,6 +1,5 @@
 import React from 'react';
 import Ikon from './Ikon';
-import { urlAman } from '../utils/data';
 import { inisial, namaPendek } from '../utils/format';
 
 export function Lencana({ nada = 'abu', children, kecil }) {
@@ -40,21 +39,7 @@ export function Kosong({ children, ikon = 'daftar' }) {
   return <div className="kosong"><Ikon n={ikon} s={20} /><span>{children}</span></div>;
 }
 
-export function DaftarTautan({ list, kosong = 'Belum ada dokumen.' }) {
-  const ada = (list || []).filter((l) => urlAman(l.url));
-  if (!ada.length) return <div className="samar kecil">{kosong}</div>;
-  return (
-    <ul className="daftar-tautan">
-      {ada.map((l, i) => (
-        <li key={(l.id || l.url) + i}>
-          <a href={urlAman(l.url)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-            <Ikon n="dok" s={15} /><span>{l.judul || 'Dokumen'}</span>{l.jenisDokumen ? <small>{l.jenisDokumen}</small> : null}<Ikon n="tautan" s={13} className="panah" />
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
+export { DaftarTautan } from './Dokumen';
 
 export function Orang({ nama, kosong = '—' }) {
   if (!nama) return <span className="samar">{kosong}</span>;

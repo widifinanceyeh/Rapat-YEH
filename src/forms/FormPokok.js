@@ -3,10 +3,11 @@ import { useApp } from '../konteks';
 import { Modal } from '../components/Modal';
 import { Field, Lipat } from '../components/Dasar';
 import { Pilih, PilihBanyak } from '../components/Pilih';
+import PilihOrang from '../components/PilihOrang';
 import EditorTautan from '../components/EditorTautan';
 import { useIsian, selisih, GalatForm, Kaki } from './umum';
 import { kunciTanggal, hariIni } from '../utils/format';
-import { opsi, opsiOrang, tautan, TAHAP_OTOMATIS, BAWAAN } from '../utils/data';
+import { opsi, tautan, TAHAP_OTOMATIS, BAWAAN } from '../utils/data';
 
 export default function FormPokok({ item, awal, draf, galat }) {
   const { data, tutupForm, kirimForm } = useApp();
@@ -50,7 +51,7 @@ export default function FormPokok({ item, awal, draf, galat }) {
           <Field label="Prioritas"><Pilih value={v.prioritas} onChange={(x) => set('prioritas', x)} opsi={opsi(data, 'PRIORITAS')} cari={false} /></Field>
           <Field label="Tahap"><Pilih value={v.statusIsu} onChange={(x) => set('statusIsu', x)} opsi={tahap} /></Field>
         </div>
-        <Field label="PIC utama"><Pilih value={v.picUtama} onChange={(x) => set('picUtama', x)} opsi={opsiOrang(data)} kosong="— belum ditentukan —" bebas placeholder="Pilih orang" /></Field>
+        <Field label="PIC utama"><PilihOrang mode="nama" value={v.picUtama} onChange={(x) => set('picUtama', x)} kosong="— belum ditentukan —" bebas /></Field>
         <Lipat judul="Rincian pembahasan" ringkas="latar, tujuan, hal yang diputuskan" terbuka={adaRincian}>
           <Field label="Latar belakang"><textarea rows={3} value={v.ringkasan} onChange={(e) => set('ringkasan', e.target.value)} /></Field>
           <div className="grid-2">

@@ -11,7 +11,7 @@ function normal(opsi) {
  * - kosong: label untuk pilihan kosong (bila boleh dikosongkan)
  * - bebas: izinkan teks bebas (nilai lama / nama di luar daftar)
  */
-export function Pilih({ value, onChange, opsi, placeholder = 'Pilih…', kosong, bebas, disabled, cari = true, className, pemicu, lebar }) {
+export function Pilih({ value, onChange, opsi, placeholder = 'Pilih…', kosong, bebas, disabled, cari = true, className, pemicu, lebar, onTambah, labelTambah = 'orang baru' }) {
   const jangkar = useRef(null);
   const [buka, setBuka] = useState(false);
   const [q, setQ] = useState('');
@@ -59,6 +59,11 @@ export function Pilih({ value, onChange, opsi, placeholder = 'Pilih…', kosong,
           ) : null}
           {!tersaring.length && !(bebas && q.trim()) ? <div className="pop-kosong">Tidak ada yang cocok.</div> : null}
         </div>
+        {onTambah ? (
+          <button type="button" className="pop-tambah" onClick={() => { const awal = q.trim(); tutup(); onTambah(awal); }}>
+            <Ikon n="tambah" s={14} />{q.trim() ? 'Tambah “' + q.trim() + '” sebagai ' + labelTambah : 'Tambah ' + labelTambah}
+          </button>
+        ) : null}
       </Popover>
     </>
   );

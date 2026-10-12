@@ -3,10 +3,11 @@ import { useApp } from '../konteks';
 import { Modal } from '../components/Modal';
 import { Field, Lipat } from '../components/Dasar';
 import { Pilih, PilihBanyak } from '../components/Pilih';
+import PilihOrang from '../components/PilihOrang';
 import EditorTautan from '../components/EditorTautan';
 import { useIsian, selisih, GalatForm, Kaki } from './umum';
 import { kunciTanggal, hariIni } from '../utils/format';
-import { opsi, opsiOrangId, tautan } from '../utils/data';
+import { opsi, tautan } from '../utils/data';
 
 export default function FormArahan({ item, awal, draf, galat }) {
   const { data, tutupForm, kirimForm } = useApp();
@@ -20,7 +21,6 @@ export default function FormArahan({ item, awal, draf, galat }) {
     unitTujuan: '', idPencatat: '', catatan: '', tautan: [],
   }, awal || {});
   const [v, set] = useIsian(asal, draf);
-  const orangOpsi = useMemo(() => opsiOrangId(data), [data]);
   const unitOpsi = useMemo(() => {
     const dari = opsi(data, 'UNIT_TUJUAN');
     if (dari.length) return dari;
@@ -50,7 +50,7 @@ export default function FormArahan({ item, awal, draf, galat }) {
         <Field label="Isi arahan" wajib><textarea autoFocus rows={4} value={v.isiArahan} onChange={(e) => set('isiArahan', e.target.value)} placeholder="Tulis arahan singkat dan langsung ke inti." /></Field>
         <div className="grid-3">
           <Field label="Tanggal"><input type="date" value={v.tanggal} onChange={(e) => set('tanggal', e.target.value)} /></Field>
-          <Field label="Pemberi arahan" wajib><Pilih value={v.idPemberi} onChange={(x) => set('idPemberi', x)} opsi={orangOpsi} placeholder="Pilih orang" /></Field>
+          <Field label="Pemberi arahan" wajib><PilihOrang value={v.idPemberi} onChange={(x) => set('idPemberi', x)} /></Field>
           <Field label="Sifat"><Pilih value={v.sifat} onChange={(x) => set('sifat', x)} opsi={opsi(data, 'SIFAT_ARAHAN')} cari={false} /></Field>
         </div>
         <Field label="Pokok bahasan terkait" petunjuk="Opsional. Satu arahan dapat terkait beberapa pokok bahasan.">
@@ -61,7 +61,7 @@ export default function FormArahan({ item, awal, draf, galat }) {
             <Field label="Lembaga"><Pilih value={v.lembaga} onChange={(x) => set('lembaga', x)} opsi={opsi(data, 'LEMBAGA')} cari={false} /></Field>
             <Field label="Forum / sumber"><Pilih value={v.forum} onChange={(x) => set('forum', x)} opsi={opsi(data, 'FORUM_ARAHAN')} /></Field>
             <Field label="Ditujukan kepada"><Pilih value={v.unitTujuan} onChange={(x) => set('unitTujuan', x)} opsi={unitOpsi} kosong="— tidak khusus —" bebas /></Field>
-            <Field label="Pencatat"><Pilih value={v.idPencatat} onChange={(x) => set('idPencatat', x)} opsi={orangOpsi} kosong="— belum ditentukan —" /></Field>
+            <Field label="Pencatat"><PilihOrang value={v.idPencatat} onChange={(x) => set('idPencatat', x)} kosong="— belum ditentukan —" /></Field>
           </div>
           <Field label="Catatan"><textarea rows={2} value={v.catatan} onChange={(e) => set('catatan', e.target.value)} /></Field>
         </Lipat>

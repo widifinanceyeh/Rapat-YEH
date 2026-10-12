@@ -101,10 +101,63 @@ export function olah(raw) {
 
 /* ---------------- Relasi ---------------- */
 export function tautan(d, jenis, id, legacyUrl, legacyJudul) {
-  const list = (d.tautanPer[jenis + '|' + teks(id)] || []).map((x) => ({ id: x.ID_TAUTAN, judul: x.JUDUL_TAUTAN, url: x.URL, jenisDokumen: x.JENIS_DOKUMEN, catatan: x.CATATAN }));
+  const list = (d.tautanPer[jenis + '|' + teks(id)] || []).map((x) => ({ id: x.ID_TAUTAN, judul: x.JUDUL_TAUTAN, url: x.URL, jenisDokumen: x.JENIS_DOKUMEN, jenisBerkas: x.JENIS_BERKAS || '', catatan: x.CATATAN }));
   if (!list.length && urlAman(legacyUrl)) return [{ judul: legacyJudul || 'Dokumen', url: legacyUrl, jenisDokumen: 'Referensi', catatan: '' }];
   return list;
 }
+/* ---------------- Jenis berkas (sama dengan Simpan.gs) ---------------- */
+export const JENIS_BERKAS = [
+  { label: 'Google Doc', kode: 'DOC', kelas: 'doc' }, { label: 'Google Sheet', kode: 'SHEET', kelas: 'sheet' },
+  { label: 'Google Slides', kode: 'SLIDE', kelas: 'slide' }, { label: 'Google Form', kode: 'FORM', kelas: 'form' },
+  { label: 'Folder Drive', kode: 'FOLDER', kelas: 'folder' }, { label: 'PDF', kode: 'PDF', kelas: 'pdf' },
+  { label: 'Gambar', kode: 'IMG', kelas: 'img' }, { label: 'Word', kode: 'WORD', kelas: 'word' },
+  { label: 'Excel', kode: 'XLS', kelas: 'xls' }, { label: 'PowerPoint', kode: 'PPT', kelas: 'ppt' },
+  { label: 'Video', kode: 'VIDEO', kelas: 'video' }, { label: 'Berkas lain', kode: 'FILE', kelas: 'lain' },
+  { label: 'Tautan web', kode: 'WEB', kelas: 'web' },
+];
+const TAK_TERDETEKSI = { label: 'Berkas Drive', kode: 'DRIVE', kelas: 'tak', tak: true };
+function idBerkasDrive(url) {
+  const u = teks(url);
+  if (!/^https?:\/\/(drive|docs)\.google\.com\//i.test(u)) return '';
+  let m = u.match(/\/file\/d\/([\w-]{10,})/);
+  if (m) return m[1];
+  if (/\/(open|uc)\b/i.test(u)) { m = u.match(/[?&]id=([\w-]{10,})/); if (m) return m[1]; }
+  return '';
+}
+function dariNama(x) {
+  const m = String(x || '').toLowerCase().split(/[?#]/)[0].match(/\.([a-z0-9]{2,5})$/);
+  const ext = m ? m[1] : '';
+  if (ext === 'pdf') return 'PDF';
+  if (/^(jpe?g|png|gif|webp|bmp|heic)$/.test(ext)) return 'Gambar';
+  if (/^(docx?|odt|rtf)$/.test(ext)) return 'Word';
+  if (/^(xlsx?|csv|ods)$/.test(ext)) return 'Excel';
+  if (/^(pptx?|odp)$/.test(ext)) return 'PowerPoint';
+  if (/^(mp4|mov|avi|mkv|webm)$/.test(ext)) return 'Video';
+  return '';
+}
+export function jenisDariAlamat(url, judul) {
+  const u = teks(url).toLowerCase();
+  if (!u) return '';
+  if (/docs\.google\.com\/document\//.test(u)) return 'Google Doc';
+  if (/docs\.google\.com\/spreadsheets\//.test(u)) return 'Google Sheet';
+  if (/docs\.google\.com\/presentation\//.test(u)) return 'Google Slides';
+  if (/docs\.google\.com\/forms\/|forms\.gle\//.test(u)) return 'Google Form';
+  if (/drive\.google\.com\/(drive\/(u\/\d+\/)?folders\/|folderview)/.test(u)) return 'Folder Drive';
+  if (/youtube\.com\/|youtu\.be\//.test(u)) return 'Video';
+  const a = dariNama(u);
+  if (a) return a;
+  if (idBerkasDrive(url)) return dariNama(judul);
+  return dariNama(judul) || 'Tautan web';
+}
+/** Jenis berkas untuk tampilan: isian sheet (otomatis/manual) → tebakan dari alamat → "Berkas Drive" (belum terdeteksi). */
+export function jenisBerkas(t) {
+  const simpan = teks(t && t.jenisBerkas).toLowerCase();
+  const tersimpan = JENIS_BERKAS.find((j) => j.label.toLowerCase() === simpan);
+  if (tersimpan) return tersimpan;
+  const tebak = jenisDariAlamat(t && t.url, t && t.judul);
+  return JENIS_BERKAS.find((j) => j.label === tebak) || TAK_TERDETEKSI;
+}
+
 export function urlAman(v) {
   const s = teks(v);
   if (!s) return '';

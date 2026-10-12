@@ -7,7 +7,6 @@ import { Konteks } from './konteks';
 import { olah, KOSONG } from './utils/data';
 import { terapkan } from './utils/patch';
 import Ikon from './components/Ikon';
-import { Orang } from './components/Dasar';
 import { Modal, Konfirmasi } from './components/Modal';
 import Beranda from './pages/Beranda';
 import PokokBahasan from './pages/PokokBahasan';
@@ -247,7 +246,7 @@ function Aplikasi({ sesi, onMasukUlang, onKeluar }) {
 
   const nilai = {
     data, rute, buka, tutupPanel, tulis, kirimForm, bukaForm, tutupForm, hapus, tanya, toast, saya, setSaya,
-    sinkron, menuGlobal, pengguna,
+    sinkron, menuGlobal, pengguna, keluar: onKeluar,
   };
 
   const Halaman = { beranda: Beranda, pokok: PokokBahasan, rapat: Rapat, 'tindak-lanjut': TindakLanjut, arahan: Arahan, pengaturan: Pengaturan }[rute.hal] || Beranda;
@@ -268,6 +267,10 @@ function Aplikasi({ sesi, onMasukUlang, onKeluar }) {
           <div className="sisi-merek">
             <img src={logo} alt="Logo Yayasan Eka Harap" />
             <div className="merek-teks"><strong>Rapat &amp; Tindak Lanjut</strong><small>Yayasan Eka Harap · UNEKA</small></div>
+            <button type="button" className="tombol-ikon ciutkan" onClick={() => { setCiut((c) => { setPref('ciut', !c); return !c; }); }}
+              aria-label={ciut ? 'Perluas menu' : 'Ciutkan menu'} title={ciut ? 'Perluas menu' : 'Ciutkan menu'}>
+              <Ikon n={ciut ? 'kanan' : 'kiri'} s={16} />
+            </button>
           </div>
           <nav className="sisi-nav">
             {MENU.map((m) => (
@@ -277,14 +280,6 @@ function Aplikasi({ sesi, onMasukUlang, onKeluar }) {
             ))}
           </nav>
           <div className="sisi-kaki">
-            <div className="sisi-pengguna" title={pengguna.nama + ' · ' + pengguna.peran}>
-              <Orang nama={pengguna.nama} />
-              <small>{pengguna.peran}</small>
-              <button type="button" className="tombol-ikon" onClick={onKeluar} aria-label="Keluar" title="Keluar"><Ikon n="keluar" s={16} /></button>
-            </div>
-            <button type="button" className="nav ciutkan" onClick={() => { setCiut((c) => { setPref('ciut', !c); return !c; }); }} title={ciut ? 'Perluas menu' : 'Ciutkan menu'}>
-              <Ikon n={ciut ? 'kanan' : 'kiri'} s={16} /><span>Ciutkan menu</span>
-            </button>
             <small className="versi">{APP_VERSION}</small>
           </div>
         </aside>

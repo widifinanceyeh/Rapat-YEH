@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Ikon from './Ikon';
+import { NavRiwayat } from './Kepala';
 
 function useEsc(aktif, fn) {
   useEffect(() => {
@@ -38,6 +39,7 @@ export function Panel({ onTutup, kepala, aksi, children }) {
         <header className="panel-kepala">
           <button type="button" className="tombol-ikon" onClick={onTutup} aria-label="Tutup panel"><Ikon n="tutup" s={18} /></button>
           <div className="panel-judul">{kepala}</div>
+          <NavRiwayat />
         </header>
         {aksi ? <div className="panel-aksi">{aksi}</div> : null}
         <div className="panel-isi">{children}</div>

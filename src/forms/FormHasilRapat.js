@@ -5,6 +5,7 @@ import { Modal } from '../components/Modal';
 import { Field, Lipat, Lencana } from '../components/Dasar';
 import { Pilih } from '../components/Pilih';
 import PilihPeserta from '../components/PilihPeserta';
+import PilihOrang from '../components/PilihOrang';
 import Ikon from '../components/Ikon';
 import { GalatForm } from './umum';
 import { hariIni, tglPanjang, teks } from '../utils/format';
@@ -171,8 +172,8 @@ export default function FormHasilRapat({ idRapat, draf, galat: galatAwal }) {
             </div>
             <div className="grid-3">
               <Field label="Jenis"><Pilih value={v.rapatBaru.jenisRapat} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { jenisRapat: x }))} opsi={opsi(data, 'JENIS_RAPAT')} kosong="— pilih —" bebas /></Field>
-              <Field label="Pimpinan"><Pilih value={v.rapatBaru.idPimpinan} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idPimpinan: x }))} opsi={opsiOrangId(data)} kosong="— belum ditentukan —" /></Field>
-              <Field label="Notulis"><Pilih value={v.rapatBaru.idNotulis} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idNotulis: x }))} opsi={opsiOrangId(data)} kosong="— belum ditentukan —" /></Field>
+              <Field label="Pimpinan"><PilihOrang value={v.rapatBaru.idPimpinan} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idPimpinan: x }))} kosong="— belum ditentukan —" /></Field>
+              <Field label="Notulis"><PilihOrang value={v.rapatBaru.idNotulis} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idNotulis: x }))} kosong="— belum ditentukan —" /></Field>
             </div>
             <Lipat judul={'Peserta (' + (v.rapatBaru.idPeserta || []).length + ')'} ringkas="opsional · ikut tercatat di notulen" terbuka={pesertaTerbuka}>
               <PilihPeserta value={v.rapatBaru.idPeserta || []} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idPeserta: x }))} opsi={pesertaOpsi} />

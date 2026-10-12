@@ -4,34 +4,12 @@ import { Modal } from '../components/Modal';
 import { Field, Lipat } from '../components/Dasar';
 import { Pilih } from '../components/Pilih';
 import PilihPeserta from '../components/PilihPeserta';
+import PilihOrang, { OrangBaru } from '../components/PilihOrang';
 import EditorTautan from '../components/EditorTautan';
 import Ikon from '../components/Ikon';
 import { useIsian, selisih, GalatForm, Kaki } from './umum';
 import { kunciTanggal, jam, menit, rentangJam } from '../utils/format';
 import { opsi, opsiOrangId, tautan, TAHAP_ARSIP, labelStatusTl } from '../utils/data';
-
-/** Tambah orang baru ke DaftarOrang tanpa meninggalkan form. */
-export function OrangBaru({ onSelesai }) {
-  const { tulis } = useApp();
-  const [v, setV] = useState({ nama: '', jabatan: '', unit: '' });
-  const [sibuk, setSibuk] = useState(false);
-  async function simpan() {
-    if (!v.nama.trim() || sibuk) return;
-    setSibuk(true);
-    const r = await tulis('addOrang', { nama: v.nama.trim(), jabatan: v.jabatan.trim(), unit: v.unit.trim() }, { optimis: false, sukses: 'Nama ditambahkan ke DaftarOrang.' });
-    setSibuk(false);
-    if (r && r.id) onSelesai({ ID_ORANG: r.id, NAMA: v.nama.trim(), JABATAN: v.jabatan.trim(), UNIT: v.unit.trim() });
-  }
-  return (
-    <div className="orang-baru">
-      <input autoFocus value={v.nama} onChange={(e) => setV(Object.assign({}, v, { nama: e.target.value }))} placeholder="Nama lengkap & gelar" />
-      <input value={v.jabatan} onChange={(e) => setV(Object.assign({}, v, { jabatan: e.target.value }))} placeholder="Jabatan" />
-      <input value={v.unit} onChange={(e) => setV(Object.assign({}, v, { unit: e.target.value }))} placeholder="Unit" />
-      <button type="button" className="tombol kecil utama" disabled={!v.nama.trim() || sibuk} onClick={simpan}>{sibuk ? 'Menyimpan…' : 'Tambah'}</button>
-      <button type="button" className="tombol kecil tipis" onClick={() => onSelesai(null)}>Batal</button>
-    </div>
-  );
-}
 
 function PilihAgenda({ value, onChange, data, terkunci }) {
   const kunci = (a) => a.jenisItem + '|' + a.idReferensi;
@@ -134,8 +112,8 @@ export default function FormRapat({ item, agendaAwal, draf, galat }) {
         {jamSalah ? <div className="peringatan-kecil teks-merah">Jam selesai harus lebih akhir dari jam mulai.</div> : null}
         {bentrok.length ? <div className="peringatan-kecil"><Ikon n="peringatan" s={14} />Bersamaan dengan: {bentrok.map((r) => r.JUDUL_RAPAT + ' (' + rentangJam(r) + ')').join('; ')}</div> : null}
         <div className="grid-2">
-          <Field label="Pimpinan rapat"><Pilih value={v.idPimpinan} onChange={(x) => set('idPimpinan', x)} opsi={orangOpsi} kosong="— belum ditentukan —" placeholder={item && item.PIMPINAN_RAPAT ? item.PIMPINAN_RAPAT : 'Pilih orang'} /></Field>
-          <Field label="Notulis"><Pilih value={v.idNotulis} onChange={(x) => set('idNotulis', x)} opsi={orangOpsi} kosong="— belum ditentukan —" placeholder={item && item.NOTULIS ? item.NOTULIS : 'Pilih orang'} /></Field>
+          <Field label="Pimpinan rapat"><PilihOrang value={v.idPimpinan} onChange={(x) => set('idPimpinan', x)} kosong="— belum ditentukan —" placeholder={item && item.PIMPINAN_RAPAT ? item.PIMPINAN_RAPAT : 'Pilih orang'} /></Field>
+          <Field label="Notulis"><PilihOrang value={v.idNotulis} onChange={(x) => set('idNotulis', x)} kosong="— belum ditentukan —" placeholder={item && item.NOTULIS ? item.NOTULIS : 'Pilih orang'} /></Field>
         </div>
         <Field label="Peserta">
           <PilihPeserta value={v.idPeserta} onChange={(x) => set('idPeserta', x)} opsi={orangOpsi} catatanLama={item && item.PESERTA && !String(item.ID_PESERTA || '').trim() ? item.PESERTA : ''} />

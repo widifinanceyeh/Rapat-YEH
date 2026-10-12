@@ -11,6 +11,7 @@ import Ikon from '../components/Ikon';
 import { GalatForm } from '../forms/umum';
 import { waktuRelatif, namaPendek } from '../utils/format';
 import { opsiOrangId, salinTeks } from '../utils/data';
+import { pergi } from '../navigasi';
 
 const PERAN = [{ value: 'Admin', label: 'Admin' }, { value: 'Staf', label: 'Staf' }];
 const STATUS = [{ value: 'Ya', label: 'Aktif' }, { value: 'Tidak', label: 'Nonaktif' }];
@@ -120,11 +121,18 @@ function FormSandi({ item, onTutup }) {
 }
 
 export default function Pengaturan() {
-  const { data, pengguna, toast } = useApp();
+  const { data, pengguna, toast, rute } = useApp();
   const admin = pengguna && pengguna.peran === 'Admin';
   const [daftar, setDaftar] = useState(null);
   const [galat, setGalat] = useState('');
   const [modal, setModal] = useState(null);
+  // Dari menu akun di kanan atas: #pengaturan?aksi=sandi langsung membuka Ganti sandi.
+  const aksi = rute && rute.query ? rute.query.aksi : '';
+  useEffect(() => {
+    if (aksi !== 'sandi') return;
+    setModal({ jenis: 'sandi' });
+    pergi('pengaturan', '', {}, true);
+  }, [aksi]);
 
   const muat = useCallback(async () => {
     if (!admin) return;

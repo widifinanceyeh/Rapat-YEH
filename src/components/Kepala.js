@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../konteks';
 import { MenuTitik } from './Pilih';
+import Popover from './Popover';
 import Ikon from './Ikon';
+import { riwayat, mundur, maju } from '../navigasi';
+import { inisial, namaPendek } from '../utils/format';
 
 export function IndikatorSimpan() {
   const { sinkron } = useApp();
@@ -24,16 +27,57 @@ export function IndikatorSimpan() {
   );
 }
 
-/** Kepala halaman yang menempel: judul, keterangan, tombol utama, menu ⋯ global. */
+/** Tombol ← → seperti peramban: berpindah antar halaman/panel yang pernah dibuka. */
+export function NavRiwayat() {
+  const r = riwayat();
+  return (
+    <div className="nav-riwayat">
+      <button type="button" className="tombol-ikon" onClick={mundur} disabled={!r.mundur} aria-label="Kembali" title="Kembali"><Ikon n="kiri" s={18} /></button>
+      <button type="button" className="tombol-ikon" onClick={maju} disabled={!r.maju} aria-label="Maju" title="Maju"><Ikon n="kanan" s={18} /></button>
+    </div>
+  );
+}
+
+/** Akun yang sedang masuk: inisial + nama; menu berisi pengaturan akun, ganti sandi, dan keluar. */
+function MenuAkun() {
+  const { pengguna, buka, keluar } = useApp();
+  const jangkar = useRef(null);
+  const [terbuka, setTerbuka] = useState(false);
+  const tutup = useCallback(() => setTerbuka(false), []);
+  if (!pengguna) return null;
+  const pilih = (fn) => () => { tutup(); fn(); };
+  return (
+    <>
+      <button type="button" ref={jangkar} className={'akun-tombol' + (terbuka ? ' buka' : '')} onClick={() => setTerbuka((x) => !x)} title={pengguna.nama + ' · ' + pengguna.peran} aria-label="Akun">
+        <span className="avatar akun-avatar">{inisial(pengguna.nama)}</span>
+        <span className="akun-nama">{namaPendek(pengguna.nama)}</span>
+        <Ikon n="bawah" s={13} />
+      </button>
+      <Popover jangkar={jangkar} buka={terbuka} onTutup={tutup} lebar={240} rata="kanan" className="menu-titik">
+        <div className="akun-info"><strong>{pengguna.nama}</strong><small>ID: {pengguna.username} · {pengguna.peran}</small></div>
+        <div className="pop-daftar">
+          <button type="button" className="pop-opsi" onClick={pilih(() => buka('pengaturan'))}><span>Pengaturan akun</span></button>
+          <button type="button" className="pop-opsi" onClick={pilih(() => buka('pengaturan', '', { aksi: 'sandi' }))}><span>Ganti sandi</span></button>
+          <div className="pop-garis" />
+          <button type="button" className="pop-opsi bahaya" onClick={pilih(keluar)}><span>Keluar</span></button>
+        </div>
+      </Popover>
+    </>
+  );
+}
+
+/** Kepala halaman yang menempel: ← →, judul, keterangan, tombol utama, menu ⋯ global, akun. */
 export default function Kepala({ judul, sub, aksi }) {
   const { menuGlobal } = useApp();
   return (
     <header className="kepala">
+      <NavRiwayat />
       <div className="kepala-judul"><h1>{judul}</h1>{sub ? <p>{sub}</p> : null}</div>
       <div className="kepala-aksi">
         <IndikatorSimpan />
         {aksi}
         <MenuTitik items={menuGlobal} label="Menu lainnya" />
+        <MenuAkun />
       </div>
     </header>
   );

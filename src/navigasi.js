@@ -21,27 +21,52 @@ export function susun(hal, id, query) {
   return q ? h + '?' + q : h;
 }
 
+/* ---- Riwayat dalam aplikasi untuk tombol ← → (urutan entri disimpan di history.state.i) ---- */
+const KUNCI_MAKS = 'rtl.v6.riwayatMaks';
+let posisi = 0;
+let maks = 0;
+function simpanMaks() { try { sessionStorage.setItem(KUNCI_MAKS, String(maks)); } catch (e) { /* abaikan */ } }
+function posisiState() { const st = window.history.state; return st && typeof st.i === 'number' ? st.i : null; }
+/** Dipanggil saat riwayat berpindah (Back/Forward peramban, tombol aplikasi, atau hash diketik). */
+function sesuaikanRiwayat() {
+  const i = posisiState();
+  if (i === null) { posisi += 1; maks = posisi; simpanMaks(); window.history.replaceState({ i: posisi }, ''); }
+  else posisi = i;
+}
+function mulaiRiwayat() {
+  const i = posisiState();
+  if (i === null) { posisi = 0; window.history.replaceState({ i: 0 }, ''); } else posisi = i;
+  let m = 0;
+  try { m = Number(sessionStorage.getItem(KUNCI_MAKS)) || 0; } catch (e) { m = 0; }
+  maks = Math.max(posisi, m);
+}
+export function riwayat() { return { mundur: posisi > 0, maju: posisi < maks }; }
+export function mundur() { if (posisi > 0) window.history.back(); }
+export function maju() { if (posisi < maks) window.history.forward(); }
+
 export function pergi(hal, id, query, ganti) {
   const h = susun(hal, id, query);
   if (window.location.hash === h) return;
-  if (ganti) window.history.replaceState(null, '', h);
-  else window.history.pushState(null, '', h);
+  if (ganti) window.history.replaceState({ i: posisi }, '', h);
+  else { posisi += 1; maks = posisi; simpanMaks(); window.history.pushState({ i: posisi }, '', h); }
   window.dispatchEvent(new Event('rtl-nav'));
 }
 
 export function useRute() {
   const [rute, setRute] = useState(() => {
+    mulaiRiwayat();
     const r = urai(window.location.hash);
     if (!r.hal) {
       const terakhir = pref('halaman', 'beranda');
       const hal = HALAMAN.indexOf(terakhir) !== -1 ? terakhir : 'beranda';
-      window.history.replaceState(null, '', '#' + hal);
+      window.history.replaceState({ i: posisi }, '', '#' + hal);
       return { hal, id: '', query: {} };
     }
     return r;
   });
   useEffect(() => {
-    const ubah = () => {
+    const ubah = (e) => {
+      if (e && (e.type === 'popstate' || e.type === 'hashchange')) sesuaikanRiwayat();
       const r = urai(window.location.hash);
       setRute(r.hal ? r : { hal: 'beranda', id: '', query: {} });
     };

@@ -3,10 +3,11 @@ import { useApp } from '../konteks';
 import { Modal } from '../components/Modal';
 import { Field, Lipat } from '../components/Dasar';
 import { Pilih, PilihBanyak } from '../components/Pilih';
+import PilihOrang from '../components/PilihOrang';
 import EditorTautan from '../components/EditorTautan';
 import { useIsian, selisih, GalatForm, Kaki } from './umum';
 import { kunciTanggal, tglPendek } from '../utils/format';
-import { opsiOrang, tautan, BAWAAN, labelStatusTl } from '../utils/data';
+import { tautan, BAWAAN, labelStatusTl } from '../utils/data';
 
 export default function FormTL({ item, awal, draf, galat }) {
   const { data, tutupForm, kirimForm } = useApp();
@@ -56,7 +57,7 @@ export default function FormTL({ item, awal, draf, galat }) {
         <GalatForm pesan={galat} />
         <Field label="Pekerjaan" wajib><input autoFocus value={v.judul} onChange={(e) => set('judul', e.target.value)} placeholder="Apa yang harus dikerjakan?" /></Field>
         <div className={edit ? 'grid-3' : 'grid-2'}>
-          <Field label="PIC"><Pilih value={v.pic} onChange={(x) => set('pic', x)} opsi={opsiOrang(data)} kosong="— belum ditentukan —" bebas placeholder="Pilih orang" /></Field>
+          <Field label="PIC"><PilihOrang mode="nama" value={v.pic} onChange={(x) => set('pic', x)} kosong="— belum ditentukan —" bebas /></Field>
           <Field label="Target"><input type="date" value={v.tanggalTarget} onChange={(e) => set('tanggalTarget', e.target.value)} /></Field>
           {edit ? <Field label="Status"><Pilih value={v.status} onChange={(x) => set('status', x)} opsi={BAWAAN.STATUS_TL.map((s) => ({ value: s, label: labelStatusTl(s) }))} cari={false} /></Field> : null}
         </div>

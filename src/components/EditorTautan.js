@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Ikon from './Ikon';
 import { Pilih } from './Pilih';
+import { LencanaBerkas, SalinTautan } from './Dokumen';
 import { opsi, urlAman } from '../utils/data';
 
 /** Nama situs ringkas untuk baris dokumen, mis. docs.google.com. */
@@ -45,11 +46,12 @@ export default function EditorTautan({ value, onChange, data }) {
         }
         return (
           <div className="tautan-ringkas" key={i}>
-            <Ikon n="dok" s={15} />
+            <LencanaBerkas t={l} onPilih={(v) => ubah(i, 'jenisBerkas', v)} />
             <span className="tautan-ringkas-isi">
               <a href={url} target="_blank" rel="noopener noreferrer" title={l.judul || url}>{l.judul || situs(url) || 'Dokumen'}</a>
               <small>{[l.jenisDokumen || 'Referensi', situs(url)].filter(Boolean).join(' · ')}</small>
             </span>
+            <SalinTautan url={url} />
             <button type="button" className="tautan-tombol" onClick={() => setEdit(i)}>Ubah</button>
             <button type="button" className="tombol-ikon" onClick={() => hapus(i)} aria-label="Hapus tautan" title="Hapus"><Ikon n="tutup" s={15} /></button>
           </div>
