@@ -37,6 +37,14 @@ export async function simpanSalinan(paket) {
   } catch (err) { /* abaikan */ }
 }
 
+export async function hapusSalinan() {
+  try {
+    const db = await buka();
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete('utama');
+  } catch (err) { /* abaikan */ }
+}
+
 // Preferensi tampilan (filter, lebar kolom, halaman terakhir) di localStorage.
 export function pref(kunci, bawaan) {
   try {

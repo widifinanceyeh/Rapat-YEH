@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { pref, setPref } from './simpanan';
 
-export const HALAMAN = ['beranda', 'pokok', 'rapat', 'tindak-lanjut', 'arahan'];
+export const HALAMAN = ['beranda', 'pokok', 'rapat', 'tindak-lanjut', 'arahan', 'pengaturan'];
 
 export function urai(hash) {
   const raw = decodeURIComponent(String(hash || '').replace(/^#\/?/, ''));

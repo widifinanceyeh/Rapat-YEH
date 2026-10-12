@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as api from './api';
 import { APP_VERSION, API_URL } from './config';
-import { bacaSalinan, simpanSalinan, pref, setPref, hapusPrefAwalan } from './simpanan';
+import { bacaSalinan, simpanSalinan, hapusSalinan, pref, setPref, hapusPrefAwalan } from './simpanan';
 import { useRute, pergi } from './navigasi';
 import { Konteks } from './konteks';
 import { olah, KOSONG } from './utils/data';
 import { terapkan } from './utils/patch';
 import Ikon from './components/Ikon';
+import { Orang } from './components/Dasar';
 import { Modal, Konfirmasi } from './components/Modal';
 import Beranda from './pages/Beranda';
 import PokokBahasan from './pages/PokokBahasan';
@@ -17,6 +18,8 @@ import DetailPokok from './pages/DetailPokok';
 import DetailRapat, { DetailNotulen } from './pages/DetailRapat';
 import DetailTL from './pages/DetailTL';
 import DetailArahan from './pages/DetailArahan';
+import Pengaturan from './pages/Pengaturan';
+import Masuk from './pages/Masuk';
 import FormPokok from './forms/FormPokok';
 import FormRapat from './forms/FormRapat';
 import FormTL from './forms/FormTL';
@@ -33,11 +36,38 @@ const MENU = [
   { hal: 'rapat', label: 'Rapat', ikon: 'rapat' },
   { hal: 'tindak-lanjut', label: 'Tindak Lanjut', ikon: 'tl' },
   { hal: 'arahan', label: 'Arahan', ikon: 'arahan' },
+  { hal: 'pengaturan', label: 'Pengaturan', ikon: 'atur', pisah: true },
 ];
 const FORM = { pokok: FormPokok, rapat: FormRapat, tl: FormTL, arahan: FormArahan, notulen: FormNotulen, salinRapat: FormSalinRapat, hasilRapat: FormHasilRapat, progres: FormProgres };
 
+/** Gerbang masuk: aplikasi (dan salinan datanya) baru dimuat setelah ada sesi. */
 export default function App() {
+  const [sesi, setSesi] = useState(() => {
+    const s = pref('sesi', null);
+    if (s && s.token) api.setToken(s.token);
+    return s && s.token ? s : null;
+  });
+  function masuk(hasil) {
+    api.setToken(hasil.token);
+    setPref('sesi', hasil);
+    if (hasil.pengguna && hasil.pengguna.idOrang) setPref('saya', hasil.pengguna.idOrang);
+    setSesi(hasil);
+  }
+  function keluar() {
+    api.post('keluar', {}).catch(() => {});
+    api.setToken('');
+    setPref('sesi', null);
+    hapusSalinan();
+    setSesi(null);
+  }
+  if (!sesi) return <Masuk onMasuk={masuk} />;
+  return <Aplikasi key={sesi.pengguna.id} sesi={sesi} onMasukUlang={masuk} onKeluar={keluar} />;
+}
+
+function Aplikasi({ sesi, onMasukUlang, onKeluar }) {
+  const pengguna = sesi.pengguna;
   const rute = useRute();
+  const [sesiHabis, setSesiHabis] = useState(false);
   const [raw, setRaw] = useState(null);
   const data = useMemo(() => olah(raw || KOSONG), [raw]);
   const [muat, setMuat] = useState({ awal: true, galat: '' });
@@ -56,6 +86,8 @@ export default function App() {
   const timerSinkron = useRef(null);
   const sedangMuat = useRef(false);
   const cekTerakhir = useRef(0);
+  const aktif = useRef(true);
+  useEffect(() => () => { aktif.current = false; window.clearTimeout(timerSinkron.current); }, []);
 
   const toast = useCallback((pesan, jenis) => {
     const id = Date.now() + Math.random();
@@ -75,6 +107,7 @@ export default function App() {
     const n = terkonfirmasi.current.length;
     try {
       const paket = await api.init(segar);
+      if (!aktif.current) return;
       server.current = paket;
       terkonfirmasi.current.splice(0, n);
       simpanSalinan(paket);
@@ -82,6 +115,7 @@ export default function App() {
       setMuat({ awal: false, galat: '' });
       if (segar) toast('Data terbaru sudah dimuat.', 'sukses');
     } catch (err) {
+      if (err instanceof api.GalatSesi) return;
       setMuat((m) => ({ awal: false, galat: m.awal || !server.current ? err.message : '' }));
       if (server.current) toast('Gagal memuat data terbaru: ' + err.message, 'galat');
     } finally {
@@ -92,6 +126,7 @@ export default function App() {
   const jadwalSinkron = useCallback((jeda) => {
     window.clearTimeout(timerSinkron.current);
     timerSinkron.current = window.setTimeout(function cek() {
+      if (!aktif.current) return;
       if (antrean.current.length) { timerSinkron.current = window.setTimeout(cek, 800); return; }
       muatServer(false);
     }, jeda || 1200);
@@ -126,9 +161,15 @@ export default function App() {
       }
     })();
     const vis = () => { if (document.visibilityState === 'visible') cekVersi(); };
+    const habis = () => setSesiHabis(true);
     document.addEventListener('visibilitychange', vis);
     window.addEventListener('focus', vis);
-    return () => { batal = true; document.removeEventListener('visibilitychange', vis); window.removeEventListener('focus', vis); };
+    window.addEventListener('rtl-sesi-habis', habis);
+    return () => {
+      batal = true;
+      document.removeEventListener('visibilitychange', vis); window.removeEventListener('focus', vis);
+      window.removeEventListener('rtl-sesi-habis', habis);
+    };
   }, [muatServer, cekVersi]);
 
   /** Satu tindakan simpan = satu permintaan. Tampil dulu di layar; dikembalikan bila ditolak. */
@@ -192,7 +233,9 @@ export default function App() {
     const t0 = performance.now();
     try {
       const p = await api.ping();
-      setDiagnosa({ versiKode: p.versiKode, versiData: p.versi, waktu: Math.round(performance.now() - t0) });
+      const waktu = Math.round(performance.now() - t0);
+      const v = await api.versi();
+      setDiagnosa({ versiKode: p.versiKode, versiData: v.versi, waktu });
     } catch (err) { setDiagnosa({ galat: err.message }); }
   }
 
@@ -204,10 +247,10 @@ export default function App() {
 
   const nilai = {
     data, rute, buka, tutupPanel, tulis, kirimForm, bukaForm, tutupForm, hapus, tanya, toast, saya, setSaya,
-    sinkron, menuGlobal,
+    sinkron, menuGlobal, pengguna,
   };
 
-  const Halaman = { beranda: Beranda, pokok: PokokBahasan, rapat: Rapat, 'tindak-lanjut': TindakLanjut, arahan: Arahan }[rute.hal] || Beranda;
+  const Halaman = { beranda: Beranda, pokok: PokokBahasan, rapat: Rapat, 'tindak-lanjut': TindakLanjut, arahan: Arahan, pengaturan: Pengaturan }[rute.hal] || Beranda;
   const FormAktif = form ? FORM[form.jenis] : null;
 
   let panel = null;
@@ -228,12 +271,17 @@ export default function App() {
           </div>
           <nav className="sisi-nav">
             {MENU.map((m) => (
-              <button key={m.hal} type="button" className={'nav' + (rute.hal === m.hal ? ' aktif' : '')} onClick={() => buka(m.hal)} title={m.label}>
+              <button key={m.hal} type="button" className={'nav' + (rute.hal === m.hal ? ' aktif' : '') + (m.pisah ? ' nav-pisah' : '')} onClick={() => buka(m.hal)} title={m.label}>
                 <Ikon n={m.ikon} s={18} /><span>{m.label}</span>
               </button>
             ))}
           </nav>
           <div className="sisi-kaki">
+            <div className="sisi-pengguna" title={pengguna.nama + ' · ' + pengguna.peran}>
+              <Orang nama={pengguna.nama} />
+              <small>{pengguna.peran}</small>
+              <button type="button" className="tombol-ikon" onClick={onKeluar} aria-label="Keluar" title="Keluar"><Ikon n="keluar" s={16} /></button>
+            </div>
             <button type="button" className="nav ciutkan" onClick={() => { setCiut((c) => { setPref('ciut', !c); return !c; }); }} title={ciut ? 'Perluas menu' : 'Ciutkan menu'}>
               <Ikon n={ciut ? 'kanan' : 'kiri'} s={16} /><span>Ciutkan menu</span>
             </button>
@@ -255,6 +303,7 @@ export default function App() {
       </div>
       {panel}
       {FormAktif ? <FormAktif key={form.jenis + JSON.stringify(Object.keys(form.props))} {...form.props} /> : null}
+      {sesiHabis ? <Masuk ulang idAwal={pengguna.username} onMasuk={(h) => { onMasukUlang(h); setSesiHabis(false); jadwalSinkron(200); }} /> : null}
       <Konfirmasi state={tanyaState} onBatal={() => { tanyaState.resolve(false); setTanyaState(null); }} onYa={() => { tanyaState.resolve(true); setTanyaState(null); }} />
       {diagnosa ? (
         <Modal judul="Diagnosa" onTutup={() => setDiagnosa(null)} ukuran="sm" kaki={<button type="button" className="tombol" onClick={() => setDiagnosa(null)}>Tutup</button>}>

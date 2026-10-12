@@ -137,7 +137,7 @@ code { background: var(--biru-pucat); padding: 1px 5px; border-radius: 4px; font
 .tautan-ikon { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; text-decoration: none; font-size: 12.5px; }
 
 /* ---------- Isian ---------- */
-input[type=text], input:not([type]), input[type=date], input[type=time], input[type=number], input[type=url], textarea {
+input[type=text], input[type=password], input:not([type]), input[type=date], input[type=time], input[type=number], input[type=url], textarea {
   width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid var(--garis-2); border-radius: var(--r); background: var(--putih);
   transition: border-color .12s, box-shadow .12s;
 }
@@ -563,4 +563,47 @@ input::placeholder, textarea::placeholder { color: var(--teks-3); }
   .tabel col:first-child { width: 230px !important; }
   .baris-jadwal small .orang > span:last-child, .baris-daftar small .orang > span:last-child { display: none; }
   .daftar-tl .lencana { display: none; }
+}
+
+/* ---------- Masuk & akun (v6.1) ---------- */
+.layar-masuk {
+  min-height: 100vh; display: grid; place-items: center; padding: 20px;
+  background: radial-gradient(1200px 600px at 15% -10%, #13447c 0%, transparent 60%), var(--navy);
+}
+.kartu-masuk {
+  width: 100%; max-width: 380px; display: grid; gap: 14px; padding: 26px 26px 18px; background: var(--putih);
+  border-radius: 16px; box-shadow: 0 24px 60px rgba(0, 15, 40, .35); border-top: 4px solid var(--pink);
+}
+.masuk-merek { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.masuk-merek img { width: 52px; height: 52px; }
+.masuk-merek strong { display: block; color: var(--navy); font-size: 16px; }
+.masuk-merek small { color: var(--teks-3); font-size: 12px; }
+.masuk-info { display: flex; gap: 8px; align-items: flex-start; padding: 9px 11px; background: var(--pink-muda); color: var(--pink-tua); border-radius: var(--r); font-size: 12.5px; }
+.masuk-kaki { text-align: center; color: var(--teks-3); font-size: 11.5px; }
+.sandi-wadah { display: flex; align-items: center; gap: 4px; }
+.sandi-wadah input { flex: 1; }
+.tombol.penuh { width: 100%; height: 40px; }
+.lapis .kartu-masuk { animation: muncul .15s ease-out; }
+.sisi-pengguna {
+  display: flex; align-items: center; gap: 8px; padding: 8px 6px 8px 10px; margin-bottom: 4px;
+  border-radius: var(--r); background: var(--navy-2); color: #fff; min-width: 0;
+}
+.sisi-pengguna .orang { flex: 1; min-width: 0; }
+.sisi-pengguna .orang > span:last-child { overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }
+.sisi-pengguna .avatar { background: var(--pink); color: var(--navy); }
+.sisi-pengguna small { color: #8ea4c2; font-size: 10.5px; }
+.sisi-pengguna .tombol-ikon { color: #b6c6dd; width: 28px; height: 28px; }
+.sisi-pengguna .tombol-ikon:hover { background: var(--navy-3); color: #fff; }
+.app.ciut .sisi-pengguna { justify-content: center; padding: 6px 0; background: transparent; flex-direction: column; }
+.app.ciut .sisi-pengguna .orang > span:last-child, .app.ciut .sisi-pengguna small { display: none; }
+.nav.nav-pisah { margin-top: 10px; }
+.nav.nav-pisah::after { content: ''; position: absolute; left: 12px; right: 12px; top: -6px; height: 1px; background: rgba(255,255,255,.08); }
+.kartu-akun { margin-bottom: 18px; }
+.bagian-akun .kartu-kepala h2, .kartu-akun .kartu-kepala h2 { font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.bagian-akun .kartu-kepala .jumlah { font-size: 11px; color: var(--teks-3); background: #e9edf2; padding: 0 7px; border-radius: 999px; font-weight: 600; }
+.catatan-akun { margin: 10px 2px 0; max-width: 820px; }
+.tautan-tombol.kiri { justify-self: start; display: inline-flex; align-items: center; gap: 5px; }
+@media (max-width: 900px) {
+  .app.ciut .sisi-pengguna { flex-direction: row; justify-content: flex-start; padding: 8px 6px 8px 10px; background: var(--navy-2); }
+  .app.ciut .sisi-pengguna .orang > span:last-child, .app.ciut .sisi-pengguna small { display: initial; }
 }
