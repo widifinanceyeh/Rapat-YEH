@@ -4,6 +4,7 @@ import * as api from '../api';
 import { Modal } from '../components/Modal';
 import { Field, Lipat, Lencana } from '../components/Dasar';
 import { Pilih } from '../components/Pilih';
+import PilihPeserta from '../components/PilihPeserta';
 import Ikon from '../components/Ikon';
 import { GalatForm } from './umum';
 import { hariIni, tglPanjang, teks } from '../utils/format';
@@ -40,7 +41,7 @@ export default function FormHasilRapat({ idRapat, draf, galat: galatAwal }) {
     ringkasanPembahasan: a.RINGKASAN_PEMBAHASAN || '', hasilKeputusan: a.HASIL_KEPUTUSAN || '',
   })) : [];
   const [v, setV] = useState(() => Object.assign({
-    rapatBaru: { judulRapat: '', tanggal: hariIni(), jenisRapat: '', idPimpinan: '', idNotulis: '' },
+    rapatBaru: { judulRapat: '', tanggal: hariIni(), jenisRapat: '', idPimpinan: '', idNotulis: '', idPeserta: [] },
     url: dokAda[0] ? dokAda[0].url : '', judulNotulen: notulenAda ? notulenAda.JUDUL : (r ? r.JUDUL_RAPAT : ''),
     catatan: notulenAda ? (notulenAda.CATATAN || '') : '', agenda: agendaAwal, tl: [],
   }, draf || {}));
@@ -51,6 +52,9 @@ export default function FormHasilRapat({ idRapat, draf, galat: galatAwal }) {
   const setAgenda = (i, k, x) => setV((s) => Object.assign({}, s, { agenda: s.agenda.map((a, j) => (j === i ? Object.assign({}, a, { [k]: x }) : a)) }));
   const setTl = (id, k, x) => setV((s) => Object.assign({}, s, { tl: s.tl.map((t) => (t.id === id ? Object.assign({}, t, { [k]: x, peringatan: k === 'pic' || k === 'kunci' || k === 'tanggalTarget' ? '' : t.peringatan }) : t)) }));
   const orangOpsi = useMemo(() => opsiOrang(data), [data]);
+  const pesertaOpsi = useMemo(() => opsiOrangId(data), [data]);
+  // Dibaca sekali saat form dibuka, agar lipatan tidak menutup sendiri ketika centang dilepas.
+  const [pesertaTerbuka] = useState(() => !!(draf && draf.rapatBaru && draf.rapatBaru.idPeserta && draf.rapatBaru.idPeserta.length));
   const tlLama = notulenAda ? data.tindakLanjut.filter((t) => t.ID_NOTULEN_ASAL === notulenAda.ID_NOTULEN || t.ID_NOTULEN === notulenAda.ID_NOTULEN) : [];
   const agendaOpsi = [{ value: '', label: 'Tanpa agenda' }].concat(v.agenda.map((a, i) => ({ value: a.kunci, label: (i + 1) + '. ' + a.judul })));
   const isuOpsi = useMemo(() => data.isu.filter((i) => TAHAP_ARSIP.indexOf(i.STATUS_ISU) === -1 && !v.agenda.some((a) => a.kunci === i.ID_ISU)).map((i) => ({ value: i.ID_ISU, label: i.JUDUL, meta: i.STATUS_ISU })), [data, v.agenda]);
@@ -170,6 +174,9 @@ export default function FormHasilRapat({ idRapat, draf, galat: galatAwal }) {
               <Field label="Pimpinan"><Pilih value={v.rapatBaru.idPimpinan} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idPimpinan: x }))} opsi={opsiOrangId(data)} kosong="— belum ditentukan —" /></Field>
               <Field label="Notulis"><Pilih value={v.rapatBaru.idNotulis} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idNotulis: x }))} opsi={opsiOrangId(data)} kosong="— belum ditentukan —" /></Field>
             </div>
+            <Lipat judul={'Peserta (' + (v.rapatBaru.idPeserta || []).length + ')'} ringkas="opsional · ikut tercatat di notulen" terbuka={pesertaTerbuka}>
+              <PilihPeserta value={v.rapatBaru.idPeserta || []} onChange={(x) => set('rapatBaru', Object.assign({}, v.rapatBaru, { idPeserta: x }))} opsi={pesertaOpsi} />
+            </Lipat>
           </section>
         ) : null}
 

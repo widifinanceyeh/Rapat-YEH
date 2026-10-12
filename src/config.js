@@ -1,5 +1,5 @@
 // Pengaturan teknis saja. Nilai bisnis berasal dari Spreadsheet.
-export const APP_VERSION = 'v6.1.1';
+export const APP_VERSION = 'v6.1.2';
 
 // Alamat Web App Apps Script (berakhiran /exec).
 export const API_URL = 'https://script.google.com/macros/s/AKfycbwkCn2mhUJVcZ_YzI_cFkCG_v9xs1-28IKLHd85Hl1LoKm9aWCpvFS2Ok79U9xbbWw/exec';

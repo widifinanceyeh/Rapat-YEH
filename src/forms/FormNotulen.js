@@ -26,8 +26,8 @@ export default function FormNotulen({ item, draf, galat }) {
     <Modal judul="Edit notulen" onTutup={tutupForm} ukuran="md" kaki={<Kaki onBatal={tutupForm} form="form-notulen" nonaktif={!v.judul.trim()} />}>
       <form id="form-notulen" onSubmit={simpan} className="form">
         <GalatForm pesan={galat} />
-        <div className="grid-2">
-          <Field label="Judul" wajib><input value={v.judul} onChange={(e) => set('judul', e.target.value)} /></Field>
+        <div className="grid-3">
+          <Field label="Judul" wajib lebar="2"><input value={v.judul} onChange={(e) => set('judul', e.target.value)} /></Field>
           <Field label="Tanggal"><input type="date" value={v.tanggal} onChange={(e) => set('tanggal', e.target.value)} /></Field>
         </div>
         <Field label="Peserta / unit"><input value={v.unitPeserta} onChange={(e) => set('unitPeserta', e.target.value)} /></Field>
