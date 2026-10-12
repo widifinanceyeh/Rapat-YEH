@@ -1,0 +1,216 @@
+// Olah data mentah dari Sheet menjadi peta & turunan yang dipakai layar.
+import { hariIni, kunciTanggal, selisihHari, teks, namaPendek, tglPanjang, rentangJam } from './format';
+
+export const KOSONG = { isu: [], rapat: [], orang: [], itemRapat: [], itemArahan: [], tautanDokumen: [], notulen: [], tindakLanjut: [], arahan: [], opsi: [] };
+
+export const BAWAAN = {
+  STATUS_TL: ['Belum Dimulai', 'Progress', 'Selesai'],
+  STATUS_ISU: ['Isu Awal', 'Dalam Pengembangan', 'Siap Dibahas', 'Dijadwalkan', 'Dalam Pembahasan', 'Menunggu Keputusan', 'Ditindaklanjuti', 'Selesai', 'Ditunda', 'Dibatalkan'],
+  STATUS_RAPAT: ['Draft', 'Dijadwalkan', 'Selesai', 'Dibatalkan'],
+  PRIORITAS: ['Rendah', 'Sedang', 'Tinggi', 'Kritis'],
+  PENANDA: ['Perlu Keputusan', 'Perlu Dibahas', 'Perlu Revisi', 'Menunggu Dokumen'],
+  STATUS_PEMBAHASAN: ['Belum Dibahas', 'Dibahas', 'Diputuskan', 'Ditunda', 'Tidak Dilanjutkan'],
+  KATEGORI_ISU: ['Legal', 'Keuangan', 'SDM', 'Akademik', 'Operasional', 'Tata Kelola', 'Lainnya'],
+  JENIS_RAPAT: ['Rapat Pembina', 'Rapat Pengurus', 'Rapat Pengawas', 'Rapat Gabungan', 'Rapat Koordinasi', 'Rapat Unit', 'Lainnya'],
+  JENIS_DOKUMEN: ['Draft', 'Referensi', 'Lampiran', 'Kajian', 'Output', 'Final'],
+  LEMBAGA: ['YEH', 'UNEKA', 'YEH & UNEKA'],
+  FORUM_ARAHAN: ['Rapat pimpinan', 'Rapat internal unit', 'Diskusi lisan', 'Kunjungan lapangan', 'WhatsApp', 'Telepon', 'Disposisi surat', 'Lain-lain'],
+  SIFAT_ARAHAN: ['Arahan/Instruksi', 'Informasi', 'Gagasan belum final', 'Peringatan'],
+};
+// Tahap yang diatur sistem; tidak ditawarkan untuk dipilih manual.
+export const TAHAP_OTOMATIS = ['Dijadwalkan', 'Ditindaklanjuti'];
+export const TAHAP_ARSIP = ['Selesai', 'Dibatalkan'];
+
+export const LABEL_STATUS_TL = { 'Belum Dimulai': 'Belum Dimulai', Progress: 'Sedang Dikerjakan', Selesai: 'Selesai' };
+export const labelStatusTl = (s) => LABEL_STATUS_TL[s] || s || '—';
+
+export function nadaTahap(s) {
+  return ({
+    'Isu Awal': 'abu', 'Dalam Pengembangan': 'abu', 'Siap Dibahas': 'biru-muda', Dijadwalkan: 'biru',
+    'Dalam Pembahasan': 'pink', 'Menunggu Keputusan': 'kuning', Ditindaklanjuti: 'hijau-muda', Selesai: 'hijau',
+    Ditunda: 'redup', Dibatalkan: 'redup',
+  })[s] || 'abu';
+}
+export function nadaStatusTl(s) { return ({ 'Belum Dimulai': 'abu', Progress: 'biru', Selesai: 'hijau' })[s] || 'abu'; }
+export function nadaPrioritas(s) { return ({ Kritis: 'merah', Tinggi: 'kuning', Sedang: 'abu', Rendah: 'redup' })[s] || 'abu'; }
+export function nadaPembahasan(s) { return ({ Diputuskan: 'hijau', Dibahas: 'biru-muda', Ditunda: 'kuning', 'Tidak Dilanjutkan': 'redup' })[s] || 'abu'; }
+
+/** Daftar pilihan: Config_Opsi (aktif, berurutan) + bawaan; nilai lama tetap dapat ditampilkan. */
+export function opsi(data, kunci) {
+  const bawaan = BAWAAN[kunci] || [];
+  const hasil = [];
+  const seen = {};
+  const tambah = (v) => { const t = teks(v); if (t && !seen[t.toLowerCase()]) { seen[t.toLowerCase()] = true; hasil.push(t); } };
+  (data.opsi || []).filter((r) => teks(r.KUNCI).toUpperCase() === kunci && teks(r.AKTIF) !== 'Tidak')
+    .sort((a, b) => (Number(a.URUTAN) || 0) - (Number(b.URUTAN) || 0)).forEach((r) => tambah(r.NILAI));
+  bawaan.forEach(tambah);
+  return hasil;
+}
+
+function petaDari(list, kunci) {
+  const p = {};
+  list.forEach((x) => { const k = teks(x[kunci]); if (k) p[k] = x; });
+  return p;
+}
+
+export function urgensi(t, hari) {
+  if (t.STATUS === 'Selesai') return 'hijau';
+  const target = kunciTanggal(t.TANGGAL_TARGET);
+  if (target) {
+    const n = selisihHari(target, hari);
+    if (n < 0) return 'merah';
+    if (n <= 3) return 'kuning';
+    return 'abu';
+  }
+  const upd = kunciTanggal(t.TANGGAL_UPDATE_TERAKHIR);
+  if (upd) {
+    const diam = selisihHari(hari, upd);
+    if (diam > 14) return 'merah';
+    if (diam > 7) return 'kuning';
+  }
+  return 'abu';
+}
+
+export function olah(raw) {
+  const d = Object.assign({}, KOSONG, raw || {});
+  Object.keys(KOSONG).forEach((k) => { if (!Array.isArray(d[k])) d[k] = []; });
+  const hari = hariIni();
+  const anak = {};
+  d.tindakLanjut.forEach((t) => { if (t.ID_INDUK) anak[t.ID_INDUK] = (anak[t.ID_INDUK] || 0) + 1; });
+  const pTl = petaDari(d.tindakLanjut, 'ID_TINDAKLANJUT');
+  d.tindakLanjut = d.tindakLanjut.map((t) => {
+    let lvl = 0; let cur = t; const seen = {};
+    while (cur && cur.ID_INDUK && lvl < 20 && !seen[cur.ID_TINDAKLANJUT]) { seen[cur.ID_TINDAKLANJUT] = 1; cur = pTl[cur.ID_INDUK]; if (cur) lvl++; }
+    return Object.assign({}, t, { URGENSI: urgensi(t, hari), JUMLAH_ANAK: anak[t.ID_TINDAKLANJUT] || 0, TINGKAT: lvl });
+  });
+  const relArahan = {};
+  d.itemArahan.forEach((r) => { const a = teks(r.ID_ARAHAN); (relArahan[a] = relArahan[a] || []).push(teks(r.ID_ISU)); });
+  d.arahan = d.arahan.map((a) => Object.assign({}, a, { ID_ISU_LIST: (relArahan[teks(a.ID_ARAHAN)] || []).filter(Boolean) }));
+  d.peta = {
+    isu: petaDari(d.isu, 'ID_ISU'), rapat: petaDari(d.rapat, 'ID_RAPAT'), notulen: petaDari(d.notulen, 'ID_NOTULEN'),
+    tl: petaDari(d.tindakLanjut, 'ID_TINDAKLANJUT'), orang: petaDari(d.orang, 'ID_ORANG'), arahan: petaDari(d.arahan, 'ID_ARAHAN'),
+  };
+  d.tautanPer = {};
+  d.tautanDokumen.forEach((x) => { const k = x.JENIS_ENTITAS + '|' + teks(x.ID_ENTITAS); (d.tautanPer[k] = d.tautanPer[k] || []).push(x); });
+  d.agendaPer = {};
+  d.itemRapat.forEach((x) => { (d.agendaPer[x.ID_RAPAT] = d.agendaPer[x.ID_RAPAT] || []).push(x); });
+  Object.keys(d.agendaPer).forEach((k) => d.agendaPer[k].sort((a, b) => Number(a.URUTAN_AGENDA || 0) - Number(b.URUTAN_AGENDA || 0)));
+  d.hari = hari;
+  return d;
+}
+
+/* ---------------- Relasi ---------------- */
+export function tautan(d, jenis, id, legacyUrl, legacyJudul) {
+  const list = (d.tautanPer[jenis + '|' + teks(id)] || []).map((x) => ({ id: x.ID_TAUTAN, judul: x.JUDUL_TAUTAN, url: x.URL, jenisDokumen: x.JENIS_DOKUMEN, catatan: x.CATATAN }));
+  if (!list.length && urlAman(legacyUrl)) return [{ judul: legacyJudul || 'Dokumen', url: legacyUrl, jenisDokumen: 'Referensi', catatan: '' }];
+  return list;
+}
+export function urlAman(v) {
+  const s = teks(v);
+  if (!s) return '';
+  try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : ''; } catch (e) { return ''; }
+}
+export function unik(list) {
+  const seen = {};
+  return list.filter((l) => { const k = urlAman(l && l.url); if (!k || seen[k]) return false; seen[k] = true; return true; });
+}
+export function tlUtama(d, idIsu) {
+  if (!idIsu) return null;
+  return d.tindakLanjut.filter((t) => t.ID_ISU === idIsu && !t.ID_INDUK && !t.ID_ARAHAN_ASAL)
+    .sort((a, b) => new Date(b.TANGGAL_UPDATE_TERAKHIR || 0) - new Date(a.TANGGAL_UPDATE_TERAKHIR || 0))[0] || null;
+}
+export function agendaPokok(d, idIsu) {
+  return d.itemRapat.filter((a) => a.ID_ISU === idIsu || (a.JENIS_ITEM === 'Pokok Bahasan' && a.ID_REFERENSI === idIsu));
+}
+export function arahanPokok(d, idIsu) { return d.arahan.filter((a) => a.ID_ISU_LIST.indexOf(idIsu) !== -1); }
+export function tlPokok(d, idIsu) { return d.tindakLanjut.filter((t) => t.ID_ISU === idIsu); }
+export function judulAgenda(d, a) {
+  if (a.JENIS_ITEM === 'Tindak Lanjut') { const t = d.peta.tl[a.ID_REFERENSI]; return t ? t.JUDUL : 'Tindak lanjut'; }
+  const i = d.peta.isu[a.ID_ISU || a.ID_REFERENSI]; return i ? i.JUDUL : 'Pokok bahasan';
+}
+export function dokumenPokok(d, idIsu) {
+  const list = [].concat(tautan(d, 'Pokok Bahasan', idIsu));
+  arahanPokok(d, idIsu).forEach((a) => list.push.apply(list, tautan(d, 'Arahan', a.ID_ARAHAN)));
+  tlPokok(d, idIsu).forEach((t) => list.push.apply(list, tautan(d, 'Tindak Lanjut', t.ID_TINDAKLANJUT, t.LINK_DOKUMEN, 'Dokumen/output')));
+  agendaPokok(d, idIsu).forEach((a) => {
+    const r = d.peta.rapat[a.ID_RAPAT];
+    if (r) list.push.apply(list, tautan(d, 'Rapat', r.ID_RAPAT));
+    const n = d.peta.notulen[a.ID_NOTULEN || (r && r.ID_NOTULEN)];
+    if (n) list.push.apply(list, tautan(d, 'Notulen', n.ID_NOTULEN, n.LINK_DOKUMEN, 'Notulen'));
+  });
+  return unik(list);
+}
+
+/** Status tampilan rapat (gabungan status sheet + notulen + tanggal). */
+export function statusRapat(r, hari) {
+  if (r.ID_NOTULEN) return { kunci: 'selesai', label: 'Selesai', nada: 'hijau' };
+  if (r.STATUS === 'Dibatalkan') return { kunci: 'batal', label: 'Dibatalkan', nada: 'redup' };
+  if (r.STATUS === 'Draft') return { kunci: 'draft', label: 'Draft', nada: 'abu' };
+  const k = kunciTanggal(r.TANGGAL);
+  if (r.STATUS === 'Selesai' || (k && k < hari)) return { kunci: 'perlu-hasil', label: 'Perlu hasil', nada: 'kuning' };
+  return { kunci: 'mendatang', label: 'Terjadwal', nada: 'biru' };
+}
+
+/* ---------------- Orang & PIC ---------------- */
+function token(s) { return teks(s).toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter((x) => x.length >= 3); }
+/** Apakah isian PIC (bebas) menunjuk orang ini? "widi" cocok "Titis Widiyanti". */
+export function picCocok(pic, orang) {
+  if (!pic || !orang) return false;
+  const p = teks(pic).toLowerCase();
+  const nama = namaPendek(orang.NAMA).toLowerCase();
+  if (!p) return false;
+  if (p === teks(orang.NAMA).toLowerCase() || p === nama) return true;
+  const tp = token(namaPendek(pic));
+  const tn = token(nama);
+  return tp.length > 0 && tp.every((a) => tn.some((b) => b.indexOf(a) !== -1));
+}
+export function cariOrang(d, teksNama) {
+  const t = teks(teksNama);
+  if (!t) return null;
+  const persis = d.orang.find((o) => teks(o.NAMA).toLowerCase() === t.toLowerCase() || namaPendek(o.NAMA).toLowerCase() === namaPendek(t).toLowerCase());
+  if (persis) return persis;
+  const cocok = d.orang.filter((o) => picCocok(t, o));
+  return cocok.length === 1 ? cocok[0] : null;
+}
+export function opsiOrang(d) {
+  return d.orang.filter((o) => o.STATUS !== 'Nonaktif').slice().sort((a, b) => namaPendek(a.NAMA).localeCompare(namaPendek(b.NAMA)))
+    .map((o) => ({ value: o.NAMA, label: namaPendek(o.NAMA), meta: [o.JABATAN, o.UNIT].filter(Boolean).join(' · '), cari: [o.NAMA, o.JABATAN, o.UNIT].join(' '), id: o.ID_ORANG }));
+}
+export function opsiOrangId(d) {
+  return opsiOrang(d).map((o) => Object.assign({}, o, { value: o.id }));
+}
+
+/* ---------------- Bahan notulen untuk /susun-notulen ---------------- */
+export function bahanNotulen(d, r) {
+  const o = (id, cadangan) => { const x = d.peta.orang[id]; return x ? x.NAMA + (x.JABATAN ? ' (' + x.JABATAN + ')' : '') : (cadangan || '[perlu dilengkapi]'); };
+  const peserta = String(r.ID_PESERTA || '').split(',').map((s) => s.trim()).filter(Boolean).map((id) => o(id, id));
+  const agenda = d.agendaPer[r.ID_RAPAT] || [];
+  const baris = [
+    'BAHAN NOTULEN — ' + r.JUDUL_RAPAT,
+    '',
+    'Hari / Tanggal : ' + tglPanjang(r.TANGGAL),
+    'Jam            : ' + (rentangJam(r) ? rentangJam(r) + ' WIB' : '[perlu dilengkapi]'),
+    'Jenis rapat    : ' + (r.JENIS_RAPAT || '-'),
+    'Pimpinan rapat : ' + o(r.ID_PIMPINAN, r.PIMPINAN_RAPAT),
+    'Notulis rapat  : ' + o(r.ID_NOTULIS, r.NOTULIS),
+    'Peserta rapat  : ' + (peserta.length ? peserta.join('; ') : (r.PESERTA || 'Sesuai lampiran daftar kehadiran')),
+    '',
+    'Agenda rapat (Kode Agenda — Pokok Bahasan):',
+  ];
+  agenda.forEach((a, i) => baris.push((i + 1) + '. ' + a.ID_ITEM_RAPAT + ' — ' + judulAgenda(d, a)));
+  if (!agenda.length) baris.push('(belum ada agenda; isi Kode Agenda dengan "-")');
+  baris.push('', 'Wajib: di akhir notulen tambahkan tabel "LAMPIRAN — RINGKASAN KEPUTUSAN DAN TINDAK LANJUT" dengan kolom',
+    'Kode Agenda | Pokok Bahasan | Ringkasan Pembahasan | Keputusan | Tindak Lanjut | PIC | Target',
+    'Satu baris untuk satu tindak lanjut. Target ditulis dd/mm/yyyy. PIC ditulis nama lengkap.');
+  return baris.join('\n');
+}
+
+export function salinTeks(t) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); resolve(); } catch (e) { reject(e); } finally { document.body.removeChild(ta); }
+  });
+}
